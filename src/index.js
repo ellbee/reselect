@@ -19,6 +19,18 @@ export function defaultValueEquals(a, b) {
     return a === b;
 }
 
+export function lazy(selector) {
+    selector.__realised = false;
+    selector.__cached = null;
+    if (selector.__realised) return selector.__cached;
+    return state => () => {
+        let val = selector(state);
+        selector.__cached = val;
+        selector.__realised = true;
+        return val;
+    };
+}
+
 // the memoize function only caches one set of arguments.  This
 // actually good enough, rather surprisingly. This is because during
 // calculation of a selector result the arguments won't
@@ -29,6 +41,7 @@ function memoize(func, valueEquals) {
     let lastResult = null;
     return (args) => {
         if (lastArgs !== null && argsEquals(args, lastArgs, valueEquals)) {
+            // if lazy this should be the wrapped function...
             return lastResult;
         }
         lastArgs = args;
